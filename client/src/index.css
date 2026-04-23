@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #0f1117;
+    color: #f1f5f9;
+    font-family: 'DM Sans', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1c2028;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #2a2f3a;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #388bfd;
+}
+
+/* Canvas drop zone highlight */
+.canvas-drop-active {
+    outline: 2px dashed #388bfd;
+    outline-offset: -2px;
+}
+
+/* Draggable component ghost */
+.dragging-ghost {
+    opacity: 0.4;
+}
