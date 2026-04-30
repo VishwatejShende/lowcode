@@ -44,12 +44,14 @@ router.post('/bulk-save', auth, async (req, res) => {
         const docs = components.map((c) => ({
             projectId,
             pageId,
+            id: c.id || c._id?.toString() || `cmp-${Date.now()}`,
             type: c.type,
             x: c.x,
             y: c.y,
             width: c.width,
             height: c.height,
             props: c.props,
+            children: c.children || [],
         }));
 
         const saved = docs.length > 0 ? await Component.insertMany(docs) : [];
@@ -63,12 +65,23 @@ router.post('/bulk-save', auth, async (req, res) => {
 // POST /api/components — create component
 router.post('/', auth, async (req, res) => {
     try {
-        const { projectId, pageId, type, x, y, width, height, props } = req.body;
+        const { projectId, pageId, id, type, x, y, width, height, props, children } = req.body;
 
         const ok = await verifyProject(projectId, req.userId);
         if (!ok) return res.status(403).json({ message: 'Forbidden' });
 
-        const component = await Component.create({ projectId, pageId, type, x, y, width, height, props });
+        const component = await Component.create({
+            projectId,
+            pageId,
+            id: id || `cmp-${Date.now()}`,
+            type,
+            x,
+            y,
+            width,
+            height,
+            props,
+            children: children || [],
+        });
         res.status(201).json(component);
     } catch (err) {
         res.status(500).json({ message: 'Server error' });

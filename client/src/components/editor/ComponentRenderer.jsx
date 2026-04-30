@@ -33,6 +33,18 @@ export default function ComponentRenderer({ component, isSelected }) {
                 </div>
             );
 
+        case 'Code':
+            return (
+                <div className={`${base} bg-[#0d1117] border border-border rounded p-3`}>
+                    <div className="text-[10px] uppercase tracking-wider text-muted mb-2">
+                        {props.language || 'javascript'}
+                    </div>
+                    <pre className="text-xs text-slate-200 overflow-auto h-[calc(100%-20px)]">
+                        <code>{props.code || '// Write your code here'}</code>
+                    </pre>
+                </div>
+            );
+
         case 'Card':
             return (
                 <div className={`${base} bg-card border border-border rounded-xl p-4 flex flex-col gap-2`}>

@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const pageSchema = new mongoose.Schema({
     id: { type: String, required: true },
     name: { type: String, required: true },
+    backgroundColor: { type: String, default: '#0f1117' },
+    backgroundMedia: { type: String, default: '' },
 });
 
 const projectSchema = new mongoose.Schema(

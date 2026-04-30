@@ -6,6 +6,7 @@ const COMPONENT_TYPES = [
     { type: 'Text', icon: '📝', desc: 'Text block' },
     { type: 'Button', icon: '🔘', desc: 'Clickable button' },
     { type: 'Image', icon: '🖼️', desc: 'Image block' },
+    { type: 'Code', icon: '💻', desc: 'Code snippet block' },
     { type: 'Card', icon: '🃏', desc: 'Content card' },
     { type: 'Input', icon: '⌨️', desc: 'Text input field' },
     { type: 'Dropdown', icon: '▼', desc: 'Select dropdown' },

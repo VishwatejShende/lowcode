@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import useStore from '../../store/useStore';
+import api from '../../lib/api';
 
 function Field({ label, value, onChange, type = 'text', placeholder }) {
     return (
@@ -47,9 +49,26 @@ function SelectField({ label, value, onChange, options }) {
     );
 }
 
+function TextAreaField({ label, value, onChange, placeholder, rows = 6 }) {
+    return (
+        <div className="flex flex-col gap-1">
+            <label className="text-xs text-muted uppercase tracking-wider">{label}</label>
+            <textarea
+                rows={rows}
+                value={value ?? ''}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder}
+                className="bg-surface border border-border rounded px-2.5 py-1.5 text-sm text-white focus:outline-none focus:border-accent resize-y"
+            />
+        </div>
+    );
+}
+
 export default function RightPanel() {
-    const { selectedId, components, currentProject, updateComponent } = useStore();
-    const selected = components.find((c) => (c._id || c.id) === selectedId);
+    const { currentProject, updateComponent, getSelected } = useStore();
+    const selected = getSelected();
+    const [uploading, setUploading] = useState(false);
+    const [uploadError, setUploadError] = useState('');
 
     if (!selected) {
         return (
@@ -73,6 +92,30 @@ export default function RightPanel() {
 
     function updateLayout(key, val) {
         updateComponent(id, { [key]: val });
+    }
+
+    async function handleImageUpload(file) {
+        if (!file) return;
+        setUploadError('');
+        setUploading(true);
+
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+
+            const { data } = await api.post('/uploads', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+
+            updateProp('src', data.url);
+            if (!props.alt) {
+                updateProp('alt', file.name.replace(/\.[^/.]+$/, ''));
+            }
+        } catch (err) {
+            setUploadError(err.response?.data?.message || 'Failed to upload image');
+        } finally {
+            setUploading(false);
+        }
     }
 
     const pageOptions = currentProject?.pages?.map(p => p.name) || [];
@@ -106,6 +149,39 @@ export default function RightPanel() {
                     <>
                         <Field label="Image URL" value={props.src} onChange={(v) => updateProp('src', v)} placeholder="https://..." />
                         <Field label="Alt Text" value={props.alt} onChange={(v) => updateProp('alt', v)} placeholder="Alt text" />
+                        <div className="flex flex-col gap-1">
+                            <label className="text-xs text-muted uppercase tracking-wider">Upload Image</label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    handleImageUpload(file);
+                                    e.target.value = '';
+                                }}
+                                className="bg-surface border border-border rounded px-2 py-1.5 text-xs text-white file:mr-2 file:rounded file:border-0 file:bg-accent file:px-2 file:py-1 file:text-white"
+                            />
+                            {uploading && <span className="text-xs text-muted">Uploading...</span>}
+                            {uploadError && <span className="text-xs text-red-400">{uploadError}</span>}
+                        </div>
+                    </>
+                );
+            case 'Code':
+                return (
+                    <>
+                        <SelectField
+                            label="Language"
+                            value={props.language || 'javascript'}
+                            onChange={(v) => updateProp('language', v)}
+                            options={['javascript', 'typescript', 'html', 'css', 'python', 'json']}
+                        />
+                        <TextAreaField
+                            label="Code"
+                            value={props.code}
+                            onChange={(v) => updateProp('code', v)}
+                            placeholder="// Write your code here"
+                            rows={8}
+                        />
                     </>
                 );
             case 'Card':

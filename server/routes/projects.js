@@ -24,7 +24,7 @@ router.post('/', auth, async (req, res) => {
         const project = await Project.create({
             userId: req.userId,
             name,
-            pages: [{ id: `page-${Date.now()}`, name: 'Page 1' }],
+            pages: [{ id: `page-${Date.now()}`, name: 'Page 1', backgroundColor: '#0f1117', backgroundMedia: '' }],
         });
 
         res.status(201).json(project);
@@ -81,7 +81,12 @@ router.post('/:id/pages', auth, async (req, res) => {
         const project = await Project.findOne({ _id: req.params.id, userId: req.userId });
         if (!project) return res.status(404).json({ message: 'Project not found' });
 
-        const newPage = { id: `page-${Date.now()}`, name: name || `Page ${project.pages.length + 1}` };
+        const newPage = {
+            id: `page-${Date.now()}`,
+            name: name || `Page ${project.pages.length + 1}`,
+            backgroundColor: '#0f1117',
+            backgroundMedia: '',
+        };
         project.pages.push(newPage);
         await project.save();
 

@@ -1,10 +1,24 @@
 import { useDroppable } from '@dnd-kit/core';
 import { useDraggable } from '@dnd-kit/core';
-import { useState } from 'react';
 import useStore from '../../store/useStore';
 import ComponentRenderer from './ComponentRenderer';
 
-function DraggableComponent({ component, isSelected, onSelect, onDelete }) {
+const COMPONENT_USAGE = {
+    Navbar: 'Top navigation with brand and links',
+    Hero: 'Main attention section with headline',
+    Text: 'Plain text content',
+    Button: 'Trigger actions or navigate pages',
+    Image: 'Display images or media',
+    Code: 'Show or write code snippets',
+    Card: 'Group content in a styled box',
+    Input: 'Capture text from users',
+    Dropdown: 'Select one option from list',
+    Container: 'Wrap and group nested elements',
+    Grid: 'Arrange items in columns',
+    Footer: 'Bottom information section',
+};
+
+function DraggableComponent({ component, selectedComponentId, onSelect, onDelete }) {
     const id = component._id || component.id;
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
         id,
@@ -21,7 +35,7 @@ function DraggableComponent({ component, isSelected, onSelect, onDelete }) {
                 width: component.width,
                 height: component.height,
                 opacity: isDragging ? 0.4 : 1,
-                zIndex: isSelected ? 10 : 1,
+                zIndex: selectedComponentId === id ? 10 : 1,
             }}
             onClick={(e) => { e.stopPropagation(); onSelect(id); }}
             className="group"
@@ -39,23 +53,48 @@ function DraggableComponent({ component, isSelected, onSelect, onDelete }) {
                     className="ml-2 hover:text-red-300"
                 >✕</button>
             </div>
+            <div className="absolute top-1 right-1 hidden group-hover:block bg-black/70 text-[10px] text-slate-200 px-2 py-1 rounded z-20 max-w-48">
+                {COMPONENT_USAGE[component.type] || 'Reusable UI building block'}
+            </div>
 
-            <ComponentRenderer component={component} isSelected={isSelected} />
+            <ComponentRenderer component={component} isSelected={selectedComponentId === id} />
+            {(component.children || []).map((child) => {
+                const childId = child._id || child.id;
+                return (
+                    <DraggableComponent
+                        key={childId}
+                        component={child}
+                        selectedComponentId={selectedComponentId}
+                        onSelect={onSelect}
+                        onDelete={onDelete}
+                    />
+                );
+            })}
         </div>
     );
 }
 
 export default function Canvas() {
-    const { components, selectedId, setSelectedId, removeComponent } = useStore();
+    const { components, selectedComponentId, setSelectedComponentId, removeComponent, currentProject, currentPageId } = useStore();
 
     const { setNodeRef, isOver } = useDroppable({ id: 'canvas' });
+    const currentPage = currentProject?.pages?.find((p) => p.id === currentPageId);
+    const backgroundMedia = currentPage?.backgroundMedia || '';
 
     return (
         <div
             ref={setNodeRef}
             className={`relative flex-1 overflow-auto bg-bg ${isOver ? 'canvas-drop-active' : ''}`}
-            style={{ minHeight: '100%', minWidth: 800 }}
-            onClick={() => setSelectedId(null)}
+            style={{
+                minHeight: '100%',
+                minWidth: 800,
+                backgroundColor: currentPage?.backgroundColor || '#0f1117',
+                backgroundImage: backgroundMedia ? `url("${backgroundMedia}")` : undefined,
+                backgroundSize: backgroundMedia ? 'cover' : undefined,
+                backgroundPosition: backgroundMedia ? 'center' : undefined,
+                backgroundRepeat: backgroundMedia ? 'no-repeat' : undefined,
+            }}
+            onClick={() => setSelectedComponentId(null)}
         >
             {/* Grid background */}
             <div
@@ -79,8 +118,8 @@ export default function Canvas() {
                     <DraggableComponent
                         key={id}
                         component={c}
-                        isSelected={selectedId === id}
-                        onSelect={setSelectedId}
+                        selectedComponentId={selectedComponentId}
+                        onSelect={setSelectedComponentId}
                         onDelete={removeComponent}
                     />
                 );
