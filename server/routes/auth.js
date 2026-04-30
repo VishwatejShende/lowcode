@@ -9,13 +9,18 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 router.post('/register', async (req, res) => {
     try {
         const { name, email, password } = req.body;
+        const requestId = req.requestId || '-';
+
+        console.log(`[AUTH ${requestId}] Register attempt email=${email || 'missing'}`);
 
         if (!name || !email || !password) {
+            console.warn(`[AUTH ${requestId}] Register missing fields`);
             return res.status(400).json({ message: 'All fields are required' });
         }
 
         const existing = await User.findOne({ email });
         if (existing) {
+            console.warn(`[AUTH ${requestId}] Register email already in use email=${email}`);
             return res.status(409).json({ message: 'Email already in use' });
         }
 
@@ -23,12 +28,14 @@ router.post('/register', async (req, res) => {
 
         const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
 
+        console.log(`[AUTH ${requestId}] Register success userId=${user._id}`);
+
         res.status(201).json({
             token,
             user: { id: user._id, name: user.name, email: user.email },
         });
     } catch (err) {
-        console.error(err);
+        console.error(`[AUTH ${req.requestId || '-'}] Register error`, err);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -37,29 +44,37 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
+        const requestId = req.requestId || '-';
+
+        console.log(`[AUTH ${requestId}] Login attempt email=${email || 'missing'}`);
 
         if (!email || !password) {
+            console.warn(`[AUTH ${requestId}] Login missing fields`);
             return res.status(400).json({ message: 'Email and password are required' });
         }
 
         const user = await User.findOne({ email });
         if (!user) {
+            console.warn(`[AUTH ${requestId}] Login user not found email=${email}`);
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
+            console.warn(`[AUTH ${requestId}] Login invalid password email=${email}`);
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
         const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+
+        console.log(`[AUTH ${requestId}] Login success userId=${user._id}`);
 
         res.json({
             token,
             user: { id: user._id, name: user.name, email: user.email },
         });
     } catch (err) {
-        console.error(err);
+        console.error(`[AUTH ${req.requestId || '-'}] Login error`, err);
         res.status(500).json({ message: 'Server error' });
     }
 });

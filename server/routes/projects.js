@@ -9,8 +9,10 @@ const router = express.Router();
 router.get('/', auth, async (req, res) => {
     try {
         const projects = await Project.find({ userId: req.userId }).sort({ updatedAt: -1 });
+        console.log(`[PROJECTS ${req.requestId || '-'}] Listed projects userId=${req.userId} count=${projects.length}`);
         res.json(projects);
     } catch (err) {
+        console.error(`[PROJECTS ${req.requestId || '-'}] List error`, err);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -27,8 +29,10 @@ router.post('/', auth, async (req, res) => {
             pages: [{ id: `page-${Date.now()}`, name: 'Page 1', backgroundColor: '#0f1117', backgroundMedia: '' }],
         });
 
+        console.log(`[PROJECTS ${req.requestId || '-'}] Created project userId=${req.userId} projectId=${project._id}`);
         res.status(201).json(project);
     } catch (err) {
+        console.error(`[PROJECTS ${req.requestId || '-'}] Create error`, err);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -38,8 +42,10 @@ router.get('/:id', auth, async (req, res) => {
     try {
         const project = await Project.findOne({ _id: req.params.id, userId: req.userId });
         if (!project) return res.status(404).json({ message: 'Project not found' });
+        console.log(`[PROJECTS ${req.requestId || '-'}] Fetched project userId=${req.userId} projectId=${req.params.id}`);
         res.json(project);
     } catch (err) {
+        console.error(`[PROJECTS ${req.requestId || '-'}] Fetch error projectId=${req.params.id}`, err);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -53,8 +59,10 @@ router.put('/:id', auth, async (req, res) => {
             { new: true }
         );
         if (!project) return res.status(404).json({ message: 'Project not found' });
+        console.log(`[PROJECTS ${req.requestId || '-'}] Updated project userId=${req.userId} projectId=${req.params.id}`);
         res.json(project);
     } catch (err) {
+        console.error(`[PROJECTS ${req.requestId || '-'}] Update error projectId=${req.params.id}`, err);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -68,8 +76,10 @@ router.delete('/:id', auth, async (req, res) => {
         // Remove all components belonging to this project
         await Component.deleteMany({ projectId: req.params.id });
 
+        console.log(`[PROJECTS ${req.requestId || '-'}] Deleted project userId=${req.userId} projectId=${req.params.id}`);
         res.json({ message: 'Project deleted' });
     } catch (err) {
+        console.error(`[PROJECTS ${req.requestId || '-'}] Delete error projectId=${req.params.id}`, err);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -90,8 +100,10 @@ router.post('/:id/pages', auth, async (req, res) => {
         project.pages.push(newPage);
         await project.save();
 
+        console.log(`[PROJECTS ${req.requestId || '-'}] Added page userId=${req.userId} projectId=${req.params.id} pageId=${newPage.id}`);
         res.json(project);
     } catch (err) {
+        console.error(`[PROJECTS ${req.requestId || '-'}] Add page error projectId=${req.params.id}`, err);
         res.status(500).json({ message: 'Server error' });
     }
 });

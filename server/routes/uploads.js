@@ -50,10 +50,12 @@ const upload = multer({
 
 router.post('/', auth, upload.single('image'), async (req, res) => {
     if (!req.file) {
+        console.warn(`[UPLOADS ${req.requestId || '-'}] Missing file`);
         return res.status(400).json({ message: 'No image uploaded' });
     }
 
     if (!cloudinaryConfigured) {
+        console.log(`[UPLOADS ${req.requestId || '-'}] Stored locally filename=${req.file.filename}`);
         return res.status(201).json({
             message: 'Image uploaded successfully',
             url: `/uploads/${req.file.filename}`,
@@ -67,24 +69,29 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
         });
         await fs.promises.unlink(req.file.path).catch(() => undefined);
 
+        console.log(`[UPLOADS ${req.requestId || '-'}] Uploaded to Cloudinary url=${result.secure_url}`);
         return res.status(201).json({
             message: 'Image uploaded successfully',
             url: result.secure_url,
         });
     } catch (err) {
         await fs.promises.unlink(req.file.path).catch(() => undefined);
+        console.error(`[UPLOADS ${req.requestId || '-'}] Cloud upload failed`, err);
         return res.status(500).json({ message: 'Cloud upload failed' });
     }
 });
 
-router.use((err, _req, res, _next) => {
+router.use((err, req, res, _next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
+            console.error(`[UPLOADS ${req.requestId || '-'}] Multer file too large`, err);
             return res.status(400).json({ message: 'Image must be smaller than 5MB' });
         }
+        console.error(`[UPLOADS ${req.requestId || '-'}] Multer error`, err);
         return res.status(400).json({ message: err.message });
     }
 
+    console.error(`[UPLOADS ${req.requestId || '-'}] Upload error`, err);
     return res.status(400).json({ message: err.message || 'Upload failed' });
 });
 

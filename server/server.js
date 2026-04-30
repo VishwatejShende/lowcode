@@ -11,6 +11,7 @@ const componentRoutes = require('./routes/components');
 const uploadRoutes = require('./routes/uploads');
 
 const app = express();
+let requestCounter = 0;
 
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
     .split(',')
@@ -22,6 +23,18 @@ app.use(cors({
     credentials: true,
 }));
 app.use(express.json());
+app.use((req, res, next) => {
+    const requestId = `${Date.now()}-${++requestCounter}`;
+    req.requestId = requestId;
+    const startedAt = Date.now();
+    console.log(`[REQ ${requestId}] ${req.method} ${req.originalUrl}`);
+    res.on('finish', () => {
+        const durationMs = Date.now() - startedAt;
+        const userTag = req.userId ? ` user=${req.userId}` : '';
+        console.log(`[RES ${requestId}] ${req.method} ${req.originalUrl} ${res.statusCode} ${durationMs}ms${userTag}`);
+    });
+    next();
+});
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes

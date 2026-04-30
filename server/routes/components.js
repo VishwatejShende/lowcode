@@ -23,8 +23,10 @@ router.get('/', auth, async (req, res) => {
         if (!ok) return res.status(403).json({ message: 'Forbidden' });
 
         const components = await Component.find({ projectId, pageId });
+        console.log(`[COMPONENTS ${req.requestId || '-'}] Listed components projectId=${projectId} pageId=${pageId} count=${components.length}`);
         res.json(components);
     } catch (err) {
+        console.error(`[COMPONENTS ${req.requestId || '-'}] List error`, err);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -55,9 +57,10 @@ router.post('/bulk-save', auth, async (req, res) => {
         }));
 
         const saved = docs.length > 0 ? await Component.insertMany(docs) : [];
+        console.log(`[COMPONENTS ${req.requestId || '-'}] Bulk saved projectId=${projectId} pageId=${pageId} count=${saved.length}`);
         res.json(saved);
     } catch (err) {
-        console.error(err);
+        console.error(`[COMPONENTS ${req.requestId || '-'}] Bulk save error`, err);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -82,8 +85,10 @@ router.post('/', auth, async (req, res) => {
             props,
             children: children || [],
         });
+        console.log(`[COMPONENTS ${req.requestId || '-'}] Created component projectId=${projectId} pageId=${pageId} componentId=${component._id}`);
         res.status(201).json(component);
     } catch (err) {
+        console.error(`[COMPONENTS ${req.requestId || '-'}] Create error`, err);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -102,8 +107,10 @@ router.put('/:id', auth, async (req, res) => {
             { $set: req.body },
             { new: true }
         );
+        console.log(`[COMPONENTS ${req.requestId || '-'}] Updated component componentId=${req.params.id}`);
         res.json(updated);
     } catch (err) {
+        console.error(`[COMPONENTS ${req.requestId || '-'}] Update error componentId=${req.params.id}`, err);
         res.status(500).json({ message: 'Server error' });
     }
 });
@@ -118,8 +125,10 @@ router.delete('/:id', auth, async (req, res) => {
         if (!ok) return res.status(403).json({ message: 'Forbidden' });
 
         await Component.findByIdAndDelete(req.params.id);
+        console.log(`[COMPONENTS ${req.requestId || '-'}] Deleted component componentId=${req.params.id}`);
         res.json({ message: 'Component deleted' });
     } catch (err) {
+        console.error(`[COMPONENTS ${req.requestId || '-'}] Delete error componentId=${req.params.id}`, err);
         res.status(500).json({ message: 'Server error' });
     }
 });
